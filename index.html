@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GenVoice AI — Studio-Quality Voice Generation Platform</title>
+    <meta name="description" content="Generate studio-quality voiceovers in 70+ languages with AI. Built for content creators, podcasters, and businesses.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #06080f;
+            --bg-secondary: #0c1018;
+            --bg-card: #111827;
+            --bg-card-hover: #1a2332;
+            --text-primary: #f0f4f8;
+            --text-secondary: #8b97a8;
+            --text-muted: #5a6577;
+            --accent-1: #6366f1;
+            --accent-2: #06b6d4;
+            --accent-3: #10b981;
+            --gradient-1: linear-gradient(135deg, #6366f1 0%, #06b6d4 100%);
+            --gradient-2: linear-gradient(135deg, #06b6d4 0%, #10b981 100%);
+            --border-color: rgba(99, 102, 241, 0.12);
+            --glow-1: rgba(99, 102, 241, 0.15);
+            --glow-2: rgba(6, 182, 212, 0.15);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ===== NOISE OVERLAY ===== */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* ===== AMBIENT GLOW ===== */
+        .ambient-glow {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .glow-1 {
+            top: -200px; right: -100px;
+            width: 600px; height: 600px;
+            background: var(--glow-1);
+            animation: float 20s ease-in-out infinite;
+        }
+        .glow-2 {
+            bottom: -200px; left: -100px;
+            width: 500px; height: 500px;
+            background: var(--glow-2);
+            animation: float 25s ease-in-out infinite reverse;
+        }
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(40px, -30px); }
+        }
+
+        /* ===== NAV ===== */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0;
+            z-index: 100;
+            padding: 1.2rem 2rem;
+            backdrop-filter: blur(20px);
+            background: rgba(6, 8, 15, 0.8);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .nav-inner {
+            max-width: 1200px; margin: 0 auto;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .logo {
+            font-size: 1.4rem; font-weight: 800;
+            background: var(--gradient-1);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            letter-spacing: -0.03em;
+        }
+        .logo span { 
+            -webkit-text-fill-color: var(--text-primary); 
+            font-weight: 500;
+        }
+        .nav-links { display: flex; gap: 2rem; align-items: center; }
+        .nav-links a {
+            color: var(--text-secondary); text-decoration: none;
+            font-size: 0.88rem; font-weight: 500;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover { color: var(--text-primary); }
+        .nav-cta {
+            padding: 0.55rem 1.4rem;
+            background: var(--gradient-1);
+            border: none; border-radius: 8px;
+            color: white; font-weight: 600; font-size: 0.85rem;
+            cursor: pointer; transition: all 0.3s;
+            text-decoration: none;
+        }
+        .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 4px 20px var(--glow-1); }
+
+        /* ===== HERO ===== */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            text-align: center;
+            padding: 8rem 2rem 6rem;
+        }
+        .hero-content { position: relative; z-index: 2; max-width: 800px; }
+        
+        .badge {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.4rem 1rem;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 100px;
+            font-size: 0.78rem; font-weight: 600;
+            color: var(--accent-2);
+            margin-bottom: 2rem;
+            animation: fadeUp 0.8s ease both;
+        }
+        .badge-dot {
+            width: 6px; height: 6px;
+            background: var(--accent-3);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        h1 {
+            font-size: clamp(2.8rem, 6vw, 4.5rem);
+            font-weight: 800;
+            line-height: 1.08;
+            letter-spacing: -0.04em;
+            margin-bottom: 1.5rem;
+            animation: fadeUp 0.8s ease 0.1s both;
+        }
+        h1 .gradient-text {
+            background: var(--gradient-1);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            max-width: 600px;
+            margin: 0 auto 2.5rem;
+            animation: fadeUp 0.8s ease 0.2s both;
+        }
+
+        .hero-actions {
+            display: flex; gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeUp 0.8s ease 0.3s both;
+        }
+        .btn-primary {
+            padding: 0.85rem 2rem;
+            background: var(--gradient-1);
+            border: none; border-radius: 10px;
+            color: white; font-weight: 700; font-size: 0.95rem;
+            cursor: pointer; transition: all 0.3s;
+            text-decoration: none;
+            font-family: inherit;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px var(--glow-1); }
+        .btn-secondary {
+            padding: 0.85rem 2rem;
+            background: transparent;
+            border: 1px solid var(--border-color); border-radius: 10px;
+            color: var(--text-primary); font-weight: 600; font-size: 0.95rem;
+            cursor: pointer; transition: all 0.3s;
+            text-decoration: none;
+            font-family: inherit;
+        }
+        .btn-secondary:hover { border-color: var(--accent-1); background: rgba(99,102,241,0.05); }
+
+        /* ===== STATS BAR ===== */
+        .stats-bar {
+            display: flex; justify-content: center; gap: 4rem;
+            padding: 0 2rem;
+            margin-top: 4rem;
+            animation: fadeUp 0.8s ease 0.4s both;
+        }
+        .stat { text-align: center; }
+        .stat-number {
+            font-size: 2rem; font-weight: 800;
+            background: var(--gradient-2);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .stat-label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 0.3rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== SECTIONS ===== */
+        section {
+            position: relative; z-index: 2;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 6rem 2rem;
+        }
+
+        .section-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--accent-2);
+            margin-bottom: 1rem;
+        }
+        .section-title {
+            font-size: clamp(2rem, 4vw, 2.8rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.15;
+            margin-bottom: 1rem;
+        }
+        .section-desc {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            max-width: 550px;
+            margin-bottom: 3.5rem;
+        }
+
+        /* ===== FEATURES ===== */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.4s;
+            position: relative;
+            overflow: hidden;
+        }
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: var(--gradient-1);
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+        .feature-card:hover {
+            border-color: rgba(99,102,241,0.25);
+            transform: translateY(-4px);
+            background: var(--bg-card-hover);
+        }
+        .feature-card:hover::before { opacity: 1; }
+
+        .feature-icon {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem;
+            margin-bottom: 1.3rem;
+        }
+        .fi-1 { background: rgba(99,102,241,0.12); }
+        .fi-2 { background: rgba(6,182,212,0.12); }
+        .fi-3 { background: rgba(16,185,129,0.12); }
+        .fi-4 { background: rgba(245,158,11,0.12); }
+        .fi-5 { background: rgba(239,68,68,0.12); }
+        .fi-6 { background: rgba(168,85,247,0.12); }
+
+        .feature-card h3 {
+            font-size: 1.1rem; font-weight: 700;
+            margin-bottom: 0.6rem;
+            letter-spacing: -0.01em;
+        }
+        .feature-card p {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            line-height: 1.65;
+        }
+
+        /* ===== HOW IT WORKS ===== */
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+        .step {
+            text-align: center;
+            position: relative;
+        }
+        .step-num {
+            width: 56px; height: 56px;
+            border-radius: 16px;
+            background: var(--gradient-1);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.3rem; font-weight: 800;
+            margin: 0 auto 1.2rem;
+            box-shadow: 0 4px 20px var(--glow-1);
+        }
+        .step h3 {
+            font-size: 1rem; font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .step p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        .step-connector {
+            position: absolute;
+            top: 28px; right: -1rem;
+            width: calc(100% - 56px);
+            height: 2px;
+            background: var(--border-color);
+            transform: translateX(100%);
+        }
+
+        /* ===== LANGUAGES ===== */
+        .lang-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            margin-top: 1rem;
+        }
+        .lang-tag {
+            padding: 0.45rem 1rem;
+            border-radius: 100px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            background: var(--bg-card);
+            transition: all 0.3s;
+        }
+        .lang-tag.highlight {
+            border-color: var(--accent-2);
+            color: var(--accent-2);
+            background: rgba(6,182,212,0.08);
+        }
+        .lang-tag:hover {
+            border-color: var(--accent-1);
+            color: var(--text-primary);
+        }
+
+        /* ===== PRICING ===== */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+        }
+        .price-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.4s;
+            position: relative;
+        }
+        .price-card.featured {
+            border-color: var(--accent-1);
+            background: linear-gradient(180deg, rgba(99,102,241,0.08) 0%, var(--bg-card) 100%);
+        }
+        .price-card.featured::before {
+            content: 'POPULAR';
+            position: absolute;
+            top: -10px; right: 20px;
+            padding: 0.25rem 0.8rem;
+            background: var(--gradient-1);
+            border-radius: 6px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+        }
+        .price-card:hover { transform: translateY(-4px); }
+
+        .price-name {
+            font-size: 0.85rem; font-weight: 600;
+            color: var(--accent-2);
+            margin-bottom: 0.8rem;
+        }
+        .price-amount {
+            font-size: 2.5rem; font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 0.3rem;
+        }
+        .price-amount span { font-size: 1rem; font-weight: 500; color: var(--text-muted); }
+        .price-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .price-features { list-style: none; }
+        .price-features li {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            padding: 0.4rem 0;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .price-features li::before {
+            content: '✓';
+            color: var(--accent-3);
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+        .price-btn {
+            display: block;
+            width: 100%;
+            margin-top: 1.5rem;
+            padding: 0.7rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+        .price-btn:hover { border-color: var(--accent-1); background: rgba(99,102,241,0.05); }
+        .price-card.featured .price-btn {
+            background: var(--gradient-1);
+            border: none;
+        }
+        .price-card.featured .price-btn:hover { box-shadow: 0 4px 20px var(--glow-1); }
+
+        /* ===== DEMO SECTION ===== */
+        .demo-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 3rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: center;
+        }
+        .demo-code {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            overflow-x: auto;
+        }
+        .demo-code .keyword { color: var(--accent-1); }
+        .demo-code .string { color: var(--accent-3); }
+        .demo-code .comment { color: var(--text-muted); }
+        .demo-code .func { color: var(--accent-2); }
+        .demo-info h3 {
+            font-size: 1.6rem; font-weight: 700;
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
+        }
+        .demo-info p {
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+
+        /* ===== POWERED BY ===== */
+        .powered-section {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+        .powered-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 1.5rem;
+        }
+        .powered-logos {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 3rem;
+            opacity: 0.5;
+        }
+        .powered-logos span {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            letter-spacing: -0.01em;
+        }
+
+        /* ===== CTA ===== */
+        .cta-section {
+            text-align: center;
+            padding: 6rem 2rem;
+        }
+        .cta-box {
+            background: linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(6,182,212,0.08) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 4rem 3rem;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .cta-box h2 {
+            font-size: 2.2rem; font-weight: 800;
+            margin-bottom: 1rem;
+            letter-spacing: -0.03em;
+        }
+        .cta-box p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1.05rem;
+            line-height: 1.6;
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            position: relative; z-index: 2;
+            border-top: 1px solid var(--border-color);
+            padding: 3rem 2rem;
+        }
+        .footer-inner {
+            max-width: 1200px; margin: 0 auto;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .footer-left { font-size: 0.82rem; color: var(--text-muted); }
+        .footer-links { display: flex; gap: 1.5rem; }
+        .footer-links a {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .footer-links a:hover { color: var(--text-primary); }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 900px) {
+            .features-grid { grid-template-columns: repeat(2, 1fr); }
+            .steps { grid-template-columns: repeat(2, 1fr); }
+            .pricing-grid { grid-template-columns: repeat(2, 1fr); }
+            .demo-box { grid-template-columns: 1fr; }
+            .step-connector { display: none; }
+        }
+        @media (max-width: 600px) {
+            .features-grid { grid-template-columns: 1fr; }
+            .steps { grid-template-columns: 1fr; }
+            .pricing-grid { grid-template-columns: 1fr; }
+            .stats-bar { gap: 2rem; flex-wrap: wrap; }
+            .nav-links a:not(.nav-cta) { display: none; }
+            .hero { padding: 7rem 1.5rem 4rem; }
+            .footer-inner { flex-direction: column; gap: 1rem; }
+        }
+
+        /* ===== SCROLL ANIMATION ===== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-inner">
+            <div class="logo">GenVoice<span> AI</span></div>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#how-it-works">How it Works</a>
+                <a href="#pricing">Pricing</a>
+                <a href="#api">API</a>
+                <a href="#waitlist" class="nav-cta">Join Waitlist</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="badge">
+                <span class="badge-dot"></span>
+                Launching Q2 2026
+            </div>
+            <h1>
+                Generate <span class="gradient-text">studio-quality</span> voices with AI
+            </h1>
+            <p class="hero-subtitle">
+                Transform text into natural, emotionally rich audio in 70+ languages. Built for content creators, podcasters, e-learning platforms, and businesses.
+            </p>
+            <div class="hero-actions">
+                <a href="#waitlist" class="btn-primary">Join the Waitlist</a>
+                <a href="#how-it-works" class="btn-secondary">See How It Works</a>
+            </div>
+            <div class="stats-bar">
+                <div class="stat">
+                    <div class="stat-number">500+</div>
+                    <div class="stat-label">AI Voices</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">70+</div>
+                    <div class="stat-label">Languages</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">&lt;2s</div>
+                    <div class="stat-label">Generation Time</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">99.9%</div>
+                    <div class="stat-label">Uptime</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section id="features">
+        <div class="section-label reveal">Platform</div>
+        <h2 class="section-title reveal">Everything you need for<br>professional voice content</h2>
+        <p class="section-desc reveal">From quick social media clips to full audiobook narration — one platform, infinite possibilities.</p>
+        
+        <div class="features-grid">
+            <div class="feature-card reveal">
+                <div class="feature-icon fi-1">🎙️</div>
+                <h3>Text-to-Speech</h3>
+                <p>Convert any text into natural, studio-quality speech with emotional control and precise intonation.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon fi-2">🔊</div>
+                <h3>Voice Cloning</h3>
+                <p>Clone any voice with just a few minutes of audio. Create custom brand voices or personal narrators.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon fi-3">🌍</div>
+                <h3>70+ Languages</h3>
+                <p>Generate speech in Turkish, English, Arabic, Spanish, German, and 65+ more languages with native accents.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon fi-4">⚡</div>
+                <h3>Real-time Generation</h3>
+                <p>Get your audio in seconds, not minutes. Streaming support for live applications and integrations.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon fi-5">🎬</div>
+                <h3>Audio Dubbing</h3>
+                <p>Automatically dub videos into any language while preserving the original speaker's voice characteristics.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon fi-6">🔌</div>
+                <h3>Developer API</h3>
+                <p>RESTful API with SDKs for Python, JavaScript, and more. Build voice into your own applications.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section id="how-it-works">
+        <div class="section-label reveal">Workflow</div>
+        <h2 class="section-title reveal">From text to audio<br>in three simple steps</h2>
+        <p class="section-desc reveal">No technical skills required. Just type, choose, and generate.</p>
+
+        <div class="steps">
+            <div class="step reveal">
+                <div class="step-num">1</div>
+                <h3>Enter Your Text</h3>
+                <p>Paste or type your script. Supports up to 100,000 characters per generation.</p>
+            </div>
+            <div class="step reveal">
+                <div class="step-num">2</div>
+                <h3>Choose a Voice</h3>
+                <p>Browse 500+ voices or use your own cloned voice. Preview before generating.</p>
+            </div>
+            <div class="step reveal">
+                <div class="step-num">3</div>
+                <h3>Generate Audio</h3>
+                <p>Click generate and get studio-quality audio in seconds. Adjust and regenerate as needed.</p>
+            </div>
+            <div class="step reveal">
+                <div class="step-num">4</div>
+                <h3>Download & Use</h3>
+                <p>Download in MP3, WAV, or other formats. Full commercial license included.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- LANGUAGES -->
+    <section>
+        <div class="section-label reveal">Global Reach</div>
+        <h2 class="section-title reveal">Speak every language<br>your audience needs</h2>
+        <p class="section-desc reveal">Native-quality pronunciation with regional accents and dialects.</p>
+
+        <div class="lang-grid reveal">
+            <span class="lang-tag highlight">🇹🇷 Turkish</span>
+            <span class="lang-tag highlight">🇬🇧 English</span>
+            <span class="lang-tag highlight">🇸🇦 Arabic</span>
+            <span class="lang-tag">🇩🇪 German</span>
+            <span class="lang-tag">🇫🇷 French</span>
+            <span class="lang-tag">🇪🇸 Spanish</span>
+            <span class="lang-tag">🇮🇹 Italian</span>
+            <span class="lang-tag">🇵🇹 Portuguese</span>
+            <span class="lang-tag">🇷🇺 Russian</span>
+            <span class="lang-tag">🇯🇵 Japanese</span>
+            <span class="lang-tag">🇰🇷 Korean</span>
+            <span class="lang-tag">🇨🇳 Chinese</span>
+            <span class="lang-tag">🇮🇳 Hindi</span>
+            <span class="lang-tag">🇳🇱 Dutch</span>
+            <span class="lang-tag">🇵🇱 Polish</span>
+            <span class="lang-tag">🇸🇪 Swedish</span>
+            <span class="lang-tag">🇮🇩 Indonesian</span>
+            <span class="lang-tag">🇻🇳 Vietnamese</span>
+            <span class="lang-tag" style="border-color: var(--accent-1); color: var(--accent-1);">+50 more</span>
+        </div>
+    </section>
+
+    <!-- API / DEMO -->
+    <section id="api">
+        <div class="demo-box reveal">
+            <div class="demo-code">
+                <span class="comment">// Generate speech with GenVoice API</span><br><br>
+                <span class="keyword">const</span> response = <span class="keyword">await</span> <span class="func">fetch</span>(<span class="string">'https://api.genvoiceai.org/v1/generate'</span>, {<br>
+                &nbsp;&nbsp;method: <span class="string">'POST'</span>,<br>
+                &nbsp;&nbsp;headers: {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'Authorization'</span>: <span class="string">`Bearer ${API_KEY}`</span>,<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'Content-Type'</span>: <span class="string">'application/json'</span><br>
+                &nbsp;&nbsp;},<br>
+                &nbsp;&nbsp;body: <span class="func">JSON.stringify</span>({<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;text: <span class="string">'Merhaba, GenVoice AI ile konuşuyorum.'</span>,<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;voice: <span class="string">'tr-derin'</span>,<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;model: <span class="string">'genvoice-v2'</span><br>
+                &nbsp;&nbsp;})<br>
+                });<br><br>
+                <span class="keyword">const</span> audio = <span class="keyword">await</span> response.<span class="func">blob</span>();
+            </div>
+            <div class="demo-info">
+                <div class="section-label">Developer API</div>
+                <h3>Build voice into your products</h3>
+                <p>Simple RESTful API with comprehensive documentation. Generate speech, clone voices, and manage audio from your own applications. SDKs for Python, JavaScript, and cURL.</p>
+                <a href="#waitlist" class="btn-primary">Get API Access</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRICING -->
+    <section id="pricing">
+        <div class="section-label reveal">Pricing</div>
+        <h2 class="section-title reveal">Simple, transparent pricing</h2>
+        <p class="section-desc reveal">Start free. Scale as you grow. No hidden fees.</p>
+
+        <div class="pricing-grid">
+            <div class="price-card reveal">
+                <div class="price-name">Free</div>
+                <div class="price-amount">$0<span>/mo</span></div>
+                <div class="price-desc">5,000 credits to get started</div>
+                <ul class="price-features">
+                    <li>5,000 credits/month</li>
+                    <li>Premade voices</li>
+                    <li>MP3 downloads</li>
+                    <li>Community support</li>
+                </ul>
+                <button class="price-btn">Get Started</button>
+            </div>
+            <div class="price-card featured reveal">
+                <div class="price-name">Creator</div>
+                <div class="price-amount">$9<span>/mo</span></div>
+                <div class="price-desc">100,000 credits for creators</div>
+                <ul class="price-features">
+                    <li>100,000 credits/month</li>
+                    <li>All 500+ voices</li>
+                    <li>Voice cloning</li>
+                    <li>Commercial license</li>
+                    <li>Priority support</li>
+                </ul>
+                <button class="price-btn">Join Waitlist</button>
+            </div>
+            <div class="price-card reveal">
+                <div class="price-name">Pro</div>
+                <div class="price-amount">$29<span>/mo</span></div>
+                <div class="price-desc">500,000 credits for pros</div>
+                <ul class="price-features">
+                    <li>500,000 credits/month</li>
+                    <li>Everything in Creator</li>
+                    <li>API access</li>
+                    <li>Priority generation</li>
+                    <li>48h support response</li>
+                </ul>
+                <button class="price-btn">Join Waitlist</button>
+            </div>
+            <div class="price-card reveal">
+                <div class="price-name">Enterprise</div>
+                <div class="price-amount">Custom</div>
+                <div class="price-desc">Unlimited for teams</div>
+                <ul class="price-features">
+                    <li>Unlimited credits</li>
+                    <li>Custom voice training</li>
+                    <li>Dedicated account manager</li>
+                    <li>SLA guarantee</li>
+                    <li>On-premise option</li>
+                </ul>
+                <button class="price-btn">Contact Sales</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- POWERED BY -->
+    <div class="powered-section reveal">
+        <div class="powered-label">Powered by world-class technology</div>
+        <div class="powered-logos">
+            <span>ElevenLabs</span>
+            <span>•</span>
+            <span>Python</span>
+            <span>•</span>
+            <span>FastAPI</span>
+            <span>•</span>
+            <span>React</span>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <section class="cta-section" id="waitlist">
+        <div class="cta-box reveal">
+            <h2>Ready to transform your content?</h2>
+            <p>Join the waitlist and be the first to access GenVoice AI when we launch.</p>
+            <a href="mailto:info@genvoiceai.org?subject=Waitlist%20Registration&body=Hi%2C%20I'd%20like%20to%20join%20the%20GenVoice%20AI%20waitlist." class="btn-primary">Join the Waitlist →</a>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-inner">
+            <div class="footer-left">© 2026 GenVoice AI. All rights reserved.</div>
+            <div class="footer-links">
+                <a href="mailto:info@genvoiceai.org">Contact</a>
+                <a href="#">Privacy</a>
+                <a href="#">Terms</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Scroll reveal
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) target.scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+    </script>
+</body>
+</html>
